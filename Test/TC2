@@ -1,0 +1,302 @@
+package com.test.pay;
+
+import org.testng.annotations.Test;
+import org.testng.internal.TestResult;
+
+import com.scb.edmi.support.DBConnectionHelper;
+import com.scb.edmi.support.HtmlReport;
+import com.scb.edmi.support.SOAPServices;
+import com.scb.edmi.support.SoapClient;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import org.testng.Assert;
+import org.testng.ITestResult;
+import org.testng.SkipException;
+
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+
+public class TC_002 {
+	public String propPath = System.getProperty("user.dir") + "//src//main//resources//TestData.properties";
+	public String testId = "002";
+	public Properties prop = new Properties();
+	SOAPServices request = new SoapClient();
+
+	public String expected;
+	public String actual;
+	private String response;
+	String newxmlVlaue;
+	public String tagName;
+	Map<String, String> xmlRead = new HashMap<String, String>();
+	SoapClient xmlValue;
+	
+	DBConnectionHelper dbhelpder;
+	List<String> db_Result = new ArrayList<String>();
+	List<String> db_Param=  new ArrayList<String>();
+	
+	public String query;
+	
+	@BeforeMethod
+	public void beforeMethod(){
+		 xmlValue = (SoapClient) request;
+	}
+
+	@Test(priority=1)
+	public void f() {
+		tagName = "Desc";
+		if (prop.getProperty("ToBeExectued" + "_" + testId).equalsIgnoreCase("N")) {
+			ITestResult result = new TestResult();
+			result.setStatus(ITestResult.SKIP);
+			throw new SkipException("Skipped the test case");
+		}
+		// Assert.assertTrue(response.equals(null));
+		//SoapClient xmlValue = (SoapClient) request;
+		actual = xmlValue.getXMlValueNew(response, "ns2:response", "Desc", 0);
+		System.out.println("xml node value from new xml calss test case two:" + newxmlVlaue);
+		expected = prop.getProperty("ExpectedMessage" + "_" + testId);
+		System.out.println("Expcted Message test case two: " + expected);
+
+		System.out.println("Actual Message :" + actual);
+		Assert.assertEquals(expected.trim(), actual.trim());
+	}
+
+	@Test(priority=2)
+	public void externalSystemRefNo() {
+
+		tagName = "ExternalSysRefNo";
+		actual = xmlValue.getXMlValueNew(response, "ns2:response", "ns2:ExternalSysRefNo", 0);
+		System.out.println("Actual ExternalSysRefNo tag value:" + newxmlVlaue);
+
+		expected = prop.getProperty("ExternalRefNo" + "_" + testId);
+		System.out.println("Expcted ExternalSysRefNo : " + expected);
+		Assert.assertEquals(expected.trim(), actual.trim());
+
+	}
+
+	@Test(priority=3)
+	public void registrationID() {
+
+		tagName = "RegistrationID";
+		actual = xmlValue.getXMlValueNew(response, "ns2:response", "ns2:RegistrationID", 0);
+		System.out.println("Actual RegistrationID tag value:" + newxmlVlaue);
+
+		expected = prop.getProperty("RegistrationId" + "_" + testId);
+		System.out.println("Expcted RegistrationID : " + expected);
+		Assert.assertEquals(expected.trim(), actual.trim());
+
+	}
+
+	@Test(priority=4)
+	public void paymentType() {
+
+		tagName = "PaymentType";
+		actual = xmlValue.getXMlValueNew(response, "ns2:response", "ns2:PaymentType", 0);
+		System.out.println("Actual PaymentType tag value:" + newxmlVlaue);
+
+		expected = prop.getProperty("PaymentType" + "_" + testId);
+		System.out.println("Expcted PaymentType : " + expected);
+		Assert.assertEquals(expected.trim(), actual.trim());
+
+	}
+
+	@Test(priority=5)
+	public void proxyType() {
+
+		tagName = "ProxyType";
+		actual = xmlValue.getXMlValueNew(response, "ns2:response", "ns2:ProxyType", 0);
+		System.out.println("Actual ProxyType tag value:" + newxmlVlaue);
+
+		expected = prop.getProperty("ProxyType" + "_" + testId);
+		System.out.println("Expcted ProxyType : " + expected);
+		Assert.assertEquals(expected.trim(), actual.trim());
+
+	}
+	
+	@Test(priority=6)
+	public void proxyValue() {
+
+		tagName = "ProxyValue";
+		actual = xmlValue.getXMlValueNew(response, "ns2:response", "ns2:ProxyValue", 0);
+		System.out.println("Actual ProxyValue tag value:" + newxmlVlaue);
+
+		expected = prop.getProperty("ProxyValue" + "_" + testId);
+		System.out.println("Expcted ProxyValue : " + expected);
+		Assert.assertEquals(expected.trim(), actual.trim());
+	}
+	
+	@Test(priority=7)
+	public void sourceSystem() {
+
+		tagName = "SourceSystem";
+		actual = xmlValue.getXMlValueNew(response, "ns2:response", "ns2:SourceSystem", 0);
+		System.out.println("Actual SourceSystem tag value:" + newxmlVlaue);
+
+		expected = prop.getProperty("SourceSystem" + "_" + testId);
+		System.out.println("Expcted SourceSystem : " + expected);
+		Assert.assertEquals(expected.trim(), actual.trim());
+	}
+	
+@Test(priority=8)
+public void accountNo_DBValidation(){
+	tagName="DB_ACCOUNTNO";
+	db_Result=dbhelpder.DBValuefetch(query, "ACCOUNTNO", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("AccountNo"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+}
+
+@Test(priority=9)
+public void currencyCode_DBValidation(){
+	tagName="DB_CURRENCYCODE";
+	db_Result=dbhelpder.DBValuefetch(query, "CURRENCYCODE", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("CurrencyCode"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+@Test(priority=10)
+public void relationshipNo_DBValidation(){
+	tagName="DB_RELATIONSHIPNO";
+	db_Result=dbhelpder.DBValuefetch(query, "RELATIONSHIPNO", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("RelNo"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+
+@Test(priority=11)
+public void paymentType_DBValidation(){
+	tagName="DB_PAYMENTTYPE";
+	db_Result=dbhelpder.DBValuefetch(query, "PAYMENTTYPE", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("PaymentType"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+
+@Test(priority=12)
+public void proxyType_DBValidation(){
+	tagName="DB_PROXYTYPE";
+	db_Result=dbhelpder.DBValuefetch(query, "PROXYTYPE", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("ProxyType"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+
+@Test(priority=13)
+public void proxyID_DBValidation(){
+	tagName="DB_PROXYID";
+	db_Result=dbhelpder.DBValuefetch(query, "PROXYID", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("ProxyValue"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}	
+
+@Test(priority=14)
+public void sourceSystem_DBValidation(){
+	tagName="DB_SOURCESYSTEM";
+	db_Result=dbhelpder.DBValuefetch(query, "SOURCESYSTEM", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("SourceSystem"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+
+@Test(priority=15)
+public void registrationID_DBValidation(){
+	tagName="DB_REGISTRATIONID";
+	db_Result=dbhelpder.DBValuefetch(query, "REGISTRATIONID", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("RegistrationId"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+
+@Test(priority=16)
+public void externalSystemKey_DBValidation(){
+	tagName="DB_EXTERNALSYSTEMKEY";
+	db_Result=dbhelpder.DBValuefetch(query, "EXTERNALSYSTEMKEY", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("ExternalRefNo"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+
+@Test(priority=17)
+public void displayName_DBValidation(){
+	tagName="DB_ALIASNAME";
+	db_Result=dbhelpder.DBValuefetch(query, "ALIASNAME", db_Param);
+	if (db_Result !=null){
+		actual=db_Result.toString().replace("[","").replace("]","");
+		expected=prop.getProperty("DisplayName"+"_"+testId);
+		Assert.assertEquals(actual, expected);
+	}
+	
+}
+
+
+
+	@AfterMethod
+	public void afterMethod(ITestResult result) {
+		String scenarioId = prop.getProperty("TestScenarioID" + "_" + testId);
+		String resultPath = prop.getProperty("ResutlFilePath" + "_" + testId);
+		String country = prop.getProperty("CountryCode" + "_" + testId);
+		System.out.println("Test Class Name " + result.getTestName() + "...." + result.getTestClass().getName());
+		if (result.isSuccess()) {
+			System.out.println("***** Success *****");
+
+			HtmlReport gen = new HtmlReport(scenarioId, expected, actual, "PASS", resultPath, country, tagName);
+			gen.reportCreation();
+		} else {
+
+			System.out.println("***** Failure *****");
+
+			HtmlReport gen = new HtmlReport(scenarioId, expected, actual, "FAIL", resultPath, country, tagName);
+			gen.reportCreation();
+		}
+	}
+
+	@BeforeClass
+	public void beforeClass() throws IOException {
+		FileInputStream fs = new FileInputStream(propPath);
+		prop.load(fs);
+		response = request.postSoapRequest(prop, testId);
+		dbhelpder= new DBConnectionHelper(prop.getProperty("UserId"+"_"+testId), prop.getProperty("Password"+"_"+testId), prop.getProperty("ConnectionString"+"_"+testId));
+		query="select * from db2inst1.PAYREG where accountno=? and relationshipno=? and REGISTRATIONID=? and EXTERNALSYSTEMKEY=?";
+		db_Param.add(prop.getProperty("AccountNo"+"_"+testId));
+		db_Param.add(prop.getProperty("RelNo"+"_"+testId));
+		db_Param.add(prop.getProperty("RegistrationId"+"_"+testId));
+		db_Param.add(prop.getProperty("ExternalRefNo"+"_"+testId));
+		
+		
+	}
+
+}
