@@ -1,1 +1,95 @@
-DB connection helper
+package com.scb.edmi.support;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DBConnectionHelper {
+	
+	String userName;
+	String passWord;
+	String connectionstrng;
+	/**
+	 * @param userName
+	 * @param passWord
+	 * @param connectionstrng
+	 */
+	public DBConnectionHelper(String userName, String passWord,
+			String connectionstrng) {
+		super();
+		this.userName = userName;
+		this.passWord = passWord;
+		this.connectionstrng = connectionstrng;
+	}
+	public List<String> DBValuefetch(String query,String fieldName,List<String> Param1)
+	   {
+		   
+		   List<String> result = new ArrayList<String>();
+		   Connection con = null;
+		   Statement stm = null;
+		   PreparedStatement pstm = null;
+		   ResultSet res = null;
+		   //String Query = "select * from db2inst1."+tableName+" where ACCOUNTNO = ?"+" and CURRENCYCODE = ?";
+		   //AccountConnectionhelper acc = new AccountConnectionhelper();
+		   //acc.DBConnection();
+		   try
+		   {
+			   Class.forName("com.ibm.db2.jcc.DB2Driver").newInstance();
+		   con = DriverManager.getConnection(connectionstrng,userName,passWord);
+		   //stm = con.createStatement();
+		   System.out.println(query);
+		   pstm = con.prepareStatement(query);
+		   for(int i = 0 ; i<Param1.size();i++){
+			   pstm.setString((i+1), Param1.get(i)); 
+		   }
+		   System.out.println("Update Query :"+pstm);
+		   res = pstm.executeQuery();
+		   
+		   while(res.next())
+		   {
+			   System.out.println(fieldName);
+			   String subvalue = res.getString(fieldName).trim();
+			   result.add(subvalue);
+			   if(subvalue.contains(".")){
+				   String ssubvalue = subvalue.substring(0,subvalue.length()-1);
+				   result.add(ssubvalue); 
+			   }
+				   
+				   
+			   //String accountNo = res.getString("ACCOUNTNO");
+			   //System.out.println(productCode+"............"+accountNo);
+			   
+		   }
+		   
+		   }
+		   catch (Exception e)
+		   {
+			   System.out.println("inside account connection helper");   
+			   System.out.println(e.getMessage());
+			   
+		   }
+		   finally
+		   {
+			   try{
+			   if(res != null)
+				   res.close();
+			   if(stm != null)
+				   pstm.close();
+			   if(con != null)
+				   con.close();
+			   }
+			   catch (SQLException sq)
+			   {
+				   sq.printStackTrace();
+			   }
+				   
+		   }
+		 return result;  
+	   }
+
+}
