@@ -1,1 +1,425 @@
-Main soap client
+package com.scb.edmi.support;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+
+
+public class SoapClient extends SOAPServices{
+	
+	@SuppressWarnings({ "deprecation", "resource" })
+	public String  postSoapRequest(Properties property,String testID) {
+		// TODO Auto-generated method stub
+		
+		String path = generatingSOAPRequest(property, testID);
+		String rretrun = null;
+		String outPath = property.getProperty("ResutlFilePath"+"_"+testID)+"RESPONSE_"+property.getProperty("TestScenarioID"+"_"+testID)+".xml";
+		File file = new File(outPath);
+		int connectionTimeout = 15000;
+		HttpParams httpParameter = new BasicHttpParams();
+		HttpConnectionParams.setConnectionTimeout(httpParameter, connectionTimeout);
+		int socketTimeout = 35000;
+		HttpConnectionParams.setSoTimeout(httpParameter, socketTimeout);
+		//String path = "C:\\Users\\1499620\\workspace\\MiniStatement\\src\\main\\resources\\RequestFile.xml";
+		
+		if(path != null)
+		{
+		String URL = property.getProperty("EndPointUrl"+"_"+testID);
+		File input = new File(path);
+		FileWriter out = null;
+		HttpClient httpclient = new DefaultHttpClient(httpParameter);
+		try
+		{
+		HttpPost post = new HttpPost(URL);
+		String data = new Scanner(input).useDelimiter("//A").next();
+		System.out.println("Request ....."+data);
+		HttpEntity enty = new StringEntity(data);
+		post.setEntity(enty);
+		post.addHeader("Content-Type", "text/xml; charset=utf-8");
+		post.addHeader("Accept","text/xml");
+		
+		HttpResponse Response = httpclient.execute(post);
+		HttpEntity resEnty = Response.getEntity();
+		System.out.println("Response ....."+Response.getStatusLine().getStatusCode());
+		String response = EntityUtils.toString(resEnty);
+		System.out.println(response);
+		if (Response.getStatusLine().getStatusCode() == 200)
+		{		
+			String formatResponse = prettyFormat(response, 2);
+			out = new FileWriter(file, false);
+			out.write(formatResponse);
+			System.out.println(response);
+		}
+		
+		}
+		catch (Exception e)
+		{
+			System.out.println(e.getMessage());
+		}
+		finally
+		{
+			try{
+			if(out != null)
+				out.close();
+			
+			}
+			catch (Exception e)
+			{
+				System.out.println(e.getMessage());
+			}
+			 
+		}
+		}
+		if(file.length() != 0)
+			rretrun = outPath;
+		
+      return rretrun;
+	}
+	public static String prettyFormat(String input, int indent) {
+	    try {
+	        Source xmlInput = new StreamSource(new StringReader(input));
+	        StringWriter stringWriter = new StringWriter();
+	        StreamResult xmlOutput = new StreamResult(stringWriter);
+	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+	        transformerFactory.setAttribute("indent-number", indent);
+	        Transformer transformer = transformerFactory.newTransformer(); 
+	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+	        transformer.transform(xmlInput, xmlOutput);
+	        return xmlOutput.getWriter().toString();
+	    } catch (Exception e) {
+	        throw new RuntimeException(e); // simple exception handling, please review it
+	    }
+	}
+	public String generatingSOAPRequest(Properties prop,String seqNo)
+    {
+  	  File inputFile = new File(prop.getProperty("InputXmlPath"+"_"+seqNo));
+  	  String otPath = prop.getProperty("ResutlFilePath"+"_"+seqNo)+"REQUEST_"+prop.getProperty("TestScenarioID"+"_"+seqNo)+".xml";
+  	  File outputFile = new File(otPath);
+  	  File directory = new File(prop.getProperty("ResutlFilePath"+"_"+seqNo));
+  	  String rtvalue = null;
+  	  if(inputFile.exists())
+  	  {
+  		  if(!directory.exists()){
+  		  outputFile.getParentFile().mkdirs();
+  		  }
+  	  try
+  	  {
+  		  //FileInputStream fs = new FileInputStream(inputFile);
+  		  FileReader fin = new FileReader(inputFile);
+  		  BufferedReader br = new BufferedReader(fin);
+  		  String line = br.readLine();
+  		  StringBuilder buld = new StringBuilder();
+  		  while( line != null)
+  		  {
+  			  if (line.contains("{") && line.contains("}"))
+  			  {
+  				  StringBuffer bfr = new StringBuffer(line);
+  				  String subvalue = line.substring(line.indexOf("{")+1, line.indexOf("}"));
+  				  String toBeReplace = "{"+subvalue+"}";
+  				  System.out.println("Value in Request XML"+subvalue+toBeReplace);
+  				  if(subvalue.equalsIgnoreCase("Date"))
+  				  {
+  					  Date now = new Date();
+  					  GregorianCalendar calendar = new GregorianCalendar();
+  					  calendar.setTimeInMillis(now.getTime());
+                        String nowDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar).toString();
+                        bfr = bfr.replace(bfr.indexOf("{"), bfr.indexOf("}")+1, nowDate);
+                        //System.out.println(bfr.toString());
+      				  line = bfr.toString();
+      				  System.out.println(line);
+  				  }
+  				  else
+  				  {
+  				  String replace = prop.getProperty(subvalue+"_"+seqNo).trim();
+  				  System.out.println(replace);
+  				  bfr = bfr.replace(bfr.indexOf("{"), bfr.indexOf("}")+1, replace);
+  				  //System.out.println(bfr.toString());
+  				  line = bfr.toString();
+  				  //line = line.replaceAll(, replace);
+  				  //line.replaceFirst(regex, replace)
+  				  System.out.println(line);
+  				  }
+  			  }
+  			  buld.append(line+"\n");
+  			  line = br.readLine();
+  		  }
+  		  br.close();
+  		  FileWriter fws = new FileWriter(outputFile, false);
+  		  BufferedWriter brw = new BufferedWriter(fws);
+  		  brw.write(buld.toString());
+  		  brw.close();
+  		  //rtvalue = true;
+  	  }
+  	  catch (Exception e)
+  	  {
+  		  //rtvalue = false;
+  		  System.out.println("Error in Generate SOAP Request"+e.getMessage());
+  	  }
+  	  
+  	  }
+  	if(outputFile.length() != 0)
+  		rtvalue = otPath;
+  	
+  	return rtvalue;  
+    }
+
+	public Map<String, String> xmlRead(String pat,ArrayList<String> tagInfo) 
+	{
+		String name = null;
+		String subName = null;
+		String val = null;
+		//String[] values = null;
+		
+		Map<String, String> xmlvalue = new ConcurrentHashMap<String, String>();
+		
+		try
+		{
+			//String pat = path.toString();
+		
+		File xmlFile = new File(pat);
+		DocumentBuilderFactory bs = DocumentBuilderFactory.newInstance();
+		DocumentBuilder bsd = bs.newDocumentBuilder();
+		Document dc = bsd.parse(xmlFile);
+		dc.getDocumentElement().normalize();
+		System.out.println("Root Node is ...................."+dc.getDocumentElement().getNodeName());
+		
+		for(int i=0;i<tagInfo.size();i++)
+		{
+		name = tagInfo.get(i);
+		NodeList ns = dc.getElementsByTagName(name);
+		
+		//System.out.println("Node Naem ............"+ns.item(0).getNodeName()+"...."+ns.item(0).getNodeType()+"...."+ns.getLength());
+		if(ns.getLength() == 1)
+		{
+			
+			Element elm = (Element) ns.item(0);
+			subName = elm.getNodeName();
+			val = elm.getTextContent().trim();
+			xmlvalue.put(subName, val);
+			/*tagStatus = "Y";
+			String [] arg = new String[]{name,val,tagStatus};
+			System.out.println(name+"....."+val+"....."+tagStatus);
+			tagNdValue.add(arg);*/
+		}
+		else if(ns.getLength() > 1)
+		{
+			
+			StringBuffer buffval = new StringBuffer();
+			for (int temp = 0; temp < ns.getLength(); temp++)
+			{
+
+				Node nNode = ns.item(temp);
+
+				System.out.println("\nCurrent Element :" + nNode.getNodeName()+temp);
+				Element elm = (Element) nNode;
+				//System.out.println("Inside child Account....."+elm.getChildNodes().getLength());
+				
+				if (nNode.getNodeType() == Node.ELEMENT_NODE && elm.getNodeName().equalsIgnoreCase(name) && elm.getChildNodes().getLength() == 0) {
+
+					
+					//System.out.println("Inside child Account....."+elm.getChildNodes().item(0).getNodeType()+Node.ELEMENT_NODE);
+					
+					
+					subName = elm.getNodeName();
+					val = elm.getTextContent().trim();
+					buffval.append(val);
+					if(!(temp+1 == ns.getLength())){
+						buffval.append(",");	
+					}
+					
+				}
+			}
+			//values = buffval.toString().split(",");
+			xmlvalue.put(subName, buffval.toString());
+		}
+		else
+		{
+			/*val = null;
+			tagStatus = "N";
+			String [] arg1 = new String[]{name,val,tagStatus};
+			tagNdValue.add(arg1);*/
+			System.out.println("Tag Name is Not available in Response"+name);
+		}
+		}
+    }
+		catch (Exception e)
+		{
+			System.out.println(e.getStackTrace());
+			//return name;
+		}
+		return xmlvalue;
+	}
+	
+	public Map<String, String> xmlRead(String pat,String tagInfo) throws Exception
+	{
+		String name = null;
+		String subName = null;
+		String val = null;
+		//String[] values = null;
+		
+		Map<String, String> xmlvalue = new ConcurrentHashMap<String, String>();
+		
+		try
+		{
+			//String pat = path.toString();
+		
+		File xmlFile = new File(pat);
+		DocumentBuilderFactory bs = DocumentBuilderFactory.newInstance();
+		DocumentBuilder bsd = bs.newDocumentBuilder();
+		Document dc = bsd.parse(xmlFile);
+		dc.getDocumentElement().normalize();
+		System.out.println("Root Node is ...................."+dc.getDocumentElement().getNodeName());
+		
+		
+		name = tagInfo;
+		NodeList ns = dc.getElementsByTagName(name);
+		
+		//System.out.println("Node Naem ............"+ns.item(0).getNodeName()+"...."+ns.item(0).getNodeType()+"...."+ns.getLength());
+		if(ns.getLength() == 1)
+		{
+			
+			Element elm = (Element) ns.item(0);
+			subName = elm.getNodeName();
+			val = elm.getTextContent().trim();
+			xmlvalue.put(subName, val);
+			/*tagStatus = "Y";
+			String [] arg = new String[]{name,val,tagStatus};
+			System.out.println(name+"....."+val+"....."+tagStatus);
+			tagNdValue.add(arg);*/
+		}
+		else if(ns.getLength() > 1)
+		{
+			
+			StringBuffer buffval = new StringBuffer();
+			for (int temp = 0; temp < ns.getLength(); temp++)
+			{
+
+				Node nNode = ns.item(temp);
+
+				System.out.println("\nCurrent Element :" + nNode.getNodeName()+temp);
+				//addede by vivek
+				val = nNode.getTextContent().trim();
+				System.out.println(nNode.getNodeName()+2 +"==Node value :"+val);
+				//above code is added by me
+				Element elm = (Element) nNode;
+				//System.out.println("Inside child Account....."+elm.getChildNodes().getLength());
+				
+				if (nNode.getNodeType() == Node.ELEMENT_NODE && elm.getNodeName().equalsIgnoreCase(name) && elm.getChildNodes().getLength() == 0) {
+
+					
+					//System.out.println("Inside child Account....."+elm.getChildNodes().item(0).getNodeType()+Node.ELEMENT_NODE);
+					
+					
+					subName = elm.getNodeName();
+					val = elm.getTextContent().trim();
+					buffval.append(val);
+					if(!(temp+1 == ns.getLength())){
+						buffval.append(",");	
+					}
+					
+				}
+			}
+			//values = buffval.toString().split(",");
+			xmlvalue.put(subName, buffval.toString());
+		}
+		else
+		{
+			/*val = null;
+			tagStatus = "N";
+			String [] arg1 = new String[]{name,val,tagStatus};
+			tagNdValue.add(arg1);*/
+			System.out.println("Tag Name is Not available in Response"+name);
+		}
+		
+    }
+		catch (Exception e)
+		{
+			System.out.println(e.getStackTrace());
+			//return name;
+		}
+		return xmlvalue;
+	}
+	//below code is added by me
+	public String getXMlValueNew(String xmlLocation,String ParentNode,String childNode,int indexofChildNode){
+		String request=xmlLocation;
+
+	    try {
+
+		File fXmlFile = new File(request);
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(fXmlFile);
+				
+		//optional, but recommended
+		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+		doc.getDocumentElement().normalize();
+
+		System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+				
+		NodeList nList = doc.getElementsByTagName(ParentNode);
+			
+		System.out.println("----------------------------");
+
+		for (int temp = 0; temp < nList.getLength(); temp++) {
+
+			Node nNode = nList.item(temp);
+					
+			System.out.println("\nCurrent Element :" + nNode.getNodeName());
+			
+					
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+
+				Element eElement = (Element) nNode;
+				
+				System.out.println("Node Value : " + eElement.getElementsByTagName(childNode).item(indexofChildNode).getTextContent());
+				request=eElement.getElementsByTagName(childNode).item(indexofChildNode).getTextContent();
+
+			}
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	    return request;
+	  
+
+
+	}
+
+}
