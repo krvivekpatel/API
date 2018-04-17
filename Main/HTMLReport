@@ -1,1 +1,158 @@
+package com.scb.edmi.support;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class HtmlReport {
+	
+	String TestCaseID;
+	String ExpectedResult;
+	String ActualResult;
+	String Result;
+	String OutputPath;
+	String Country;
+	String TagName;
+	FileWriter fw;
+	public HtmlReport(String testCaseID, String expectedResult,
+			String actualResult, String result, String outputPath, String country, String tagString) {
+		super();
+		TestCaseID = testCaseID;
+		ExpectedResult = expectedResult;
+		ActualResult = actualResult;
+		Result = result;
+		OutputPath = outputPath;
+		Country = country;
+		TagName = tagString;
+	}
+	public void reportCreation(){
+		
+	
+	File otfile = new File(OutputPath+TestCaseID+".html");
+	File dir = new File(OutputPath);	
+	if(otfile.exists())
+	{
+		insertRow(TestCaseID, ExpectedResult, ActualResult, Result, Country, otfile, TagName);
+	}
+	else{
+		if(!dir.exists())
+		{
+		dir.mkdirs();
+		}
+		createHtmlFile(Country, otfile);
+		insertRow(TestCaseID, ExpectedResult, ActualResult, Result, Country, otfile, TagName);
+		
+		
+	}
+	
+	
+	}
+	public void insertRow(String ntestCaseID, String nexpectedResult,
+			String nactualResult, String nresult, String ncountry, File nfile, String ntagName){
+		try{
+		fw = new FileWriter(nfile, true);
+		StringBuilder bsd = new StringBuilder();
+		String Row = "<tr bgcolor = #99CCFF >"+"\n";
+		bsd.append(Row);
+		String Column1 = "<td width=400>"+"\n"+
+		"<p align=center><font face=Verdana size=2><b>"+ntestCaseID+"</b></td>"+"\n";
+		bsd.append(Column1);
+		String Column_1 = "<td width=400nowrap>"+"\n"+"<p align=center><font face=Verdana size=2><b>"+ntagName+"</b></td>"+"\n";
+        bsd.append(Column_1);
+		String Column2 = "<td width=400nowrap>"+"\n"+"<p align=center><font face=Verdana size=2><b>"+nexpectedResult+"</b></td>"+"\n";
+        bsd.append(Column2);
+        String Column3 = "<td width=400>"+"\n"+"<p align=center><font face=Verdana size=2><b>"+nactualResult +"</b></td>"+"\n";
+        bsd.append(Column3);
+        if(Result.equalsIgnoreCase("PASS")){
+        String Column4 = "<td height=23width=400>"+"\n"+"<p align=center><b><font face=Verdana size=2 color=#008000>"+nresult+"</font></b></td>";
+        bsd.append(Column4);
+        }
+        else{
+            String Column5 = "<td height=23width=400>"+"\n"+"<p align=center><b><font face=Verdana size=2 color=#FF0000>"+nresult+"</font></b></td>";
+            bsd.append(Column5);
+        } 
+        System.out.println(bsd.toString());
+        fw.write(bsd.toString());
+        fw.close();
+		}
+        catch (Exception e)
+    	{
+    		System.out.println(e.getStackTrace());
+    		//return name;
+    	}
+	    }
+		
+	public void createHtmlFile(String rcountry, File rfile){
+		DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		Date dat = new Date();
+		String dt = dateFormat.format(dat);
+		//String  dt = dateFormat.format(Calendar.getInstance());
+		//Date dte = Calendar.getInstance().getTime();
+		//String datte = Integer.toString(dte.getDate())+"/"+Integer.toString(dte.getMonth())+"/"+Integer.toString(dte.getYear());
+		System.out.println("Date is .."+dt);
+		try{
+		fw = new FileWriter(rfile);
+		StringBuilder bsr = new StringBuilder();
+		String head = "<html><head><meta http-equiv=Content-Languagecontent=en-us>"
+				+ "<meta http-equiv=Content-Typecontent=text/html; charset=windows-1252>"
+				+ "<title>SCB - Core Banking Automation Execution Results</title>"
+				+ "</head>";
+		bsr.append(head);
+		String body = "<body><blockquote>";
+		bsr.append(body);
+		String table1 = "<table border=1  id=table1 width=844 height=31 >"
+				+ "<tr bgcolor = #99FFAA>"
+				+ "<td>"
+				+ "<p align=justify><b><font color=#000000 size=5 face= Verdana>EBBS to EDMI -AUTOMATION EXECUTION SUMMARY</font> </p>"
+				+ "</td>"
+				+ "</tr>"
+				+ "</table>";
+		bsr.append(table1);
+		String table2 = "<table border=1 id=table2 width=844 height=31 >"
+				+ "<tr bgcolor = #99FFAA>"
+				+ "<td width=2000>"
+				+ "<p align=center><b><font color = #000000 face= Verdana size=3>REGRESSION</b></td>"
+				+ "<td width=2000>"
+				+ "<p align=center><b><font color = #000000 face= Verdana size=3>COUNTRY:"+rcountry+"</b></td>"
+				+ "<td width=2000>"
+				+ "<p align=center><b><font color = #000000 face= Verdana size=3>MODULE:EDMI Service</b></td>"
+				+ "<td width=2000>"
+				+ "<p align=center><b><font color = #000000 face= Verdana size=3>"+dt+"</b></td>"
+				+ "</tr>"
+				+ "</table>";
+		bsr.append(table2);
+		String table3="<table border=1 id=table1 width=844 height=31 >"
+				+ "<tr bgcolor= #99FFAA>"
+				+ "<td width=400>"
+				+ "<p align=center><b><font color = #000000  face=Arial Narrow size=2>TEST CASE ID</b></td>"
+				+"<td width=400>"
+				+ "<p align=center><b><font color = #000000  face=Arial Narrow size=2>FIELD NAME</b></td>"
+				+ "<td width=400>"
+				+ "<p align=center><b><font color = #000000  face=Arial Narrow size=2>EXPECTED RESULT</b></td>"
+				+ "<td width=400>"
+				+ "<p align=center><b><font color = #000000  face=Arial Narrow size=2>ACTUAL RESULT</b></td>"
+				+ "<td width=400>"
+				+ "<p align=center><b><font color = #000000  face=Arial Narrow size=2>STATUS</b></td>"
+				+ "</tr>";
+		bsr.append(table3);
+		String bodyclose = "</blockquote>"
+				+ "</body>"
+				+ "</html>";
+		bsr.append(bodyclose);
+		System.out.println(bsr.toString());
+        fw.write(bsr.toString());
+        fw.close();
+		}
+		catch (Exception e)
+    	{
+    		System.out.println(e.getStackTrace());
+    		//return name;
+    	}
+		
+	}
+	
+
+
+}
