@@ -1,0 +1,89 @@
+package com.test.pay;
+
+import org.testng.annotations.Test;
+import org.testng.internal.TestResult;
+
+import com.scb.edmi.support.HtmlReport;
+import com.scb.edmi.support.SOAPServices;
+import com.scb.edmi.support.SoapClient;
+
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import org.testng.Assert;
+import org.testng.ITestResult;
+import org.testng.SkipException;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+
+public class TC_001 {
+	public String propPath=System.getProperty("user.dir")+"//src//main//resources//TestData.properties";
+	public String testId="001";
+	public Properties prop=new Properties();
+	SOAPServices request = new SoapClient();
+	
+	public String expected;
+	public String actual;
+	private String response;
+	 String newxmlVlaue;
+	Map<String, String> xmlRead= new HashMap<String, String>();	
+  @Test
+  public void f() {
+		 if (prop.getProperty("ToBeExectued"+"_"+testId).equalsIgnoreCase("N")){
+			 ITestResult result = new TestResult();
+			 result.setStatus(ITestResult.SKIP);
+			 throw new SkipException("Skipped the test case");
+				 }
+		// Assert.assertTrue(response.equals(null));
+		 SoapClient xmlValue = (SoapClient) request;
+		 //xmlRead = xmlValue.xmlRead(response, "Desc");
+	//reading xmlvalue from new created class
+		 newxmlVlaue= xmlValue.getXMlValueNew(response, "ns2:response", "Desc",1);
+		//readXML readxml = new readXML(response, "ns2:response","Desc", 1);
+		//newxmlVlaue=readxml.getNewXmlValue();
+		System.out.println("xml node value from new xml calss in test one :"+newxmlVlaue);
+		 System.out.println("Tag Value returned form the response in test one :"+xmlRead);
+		 //expected = prop.getProperty("ExpectedMessage"+"_"+testId);
+		 expected=prop.getProperty("ExpectedMessage"+"_"+testId);
+		 System.out.println("Expcted Message : "+expected);
+		 //actual=xmlRead.get("Desc");
+		 
+		 actual=newxmlVlaue;
+		 System.out.println("Actual Message in test one :"+actual);
+		 Assert.assertEquals(expected, actual);
+  }
+  @AfterMethod
+  public void afterMethod(ITestResult result) {
+	  String scenarioId=prop.getProperty("TestScenarioID"+"_"+testId);
+	  String resultPath=prop.getProperty("ResutlFilePath"+"_"+testId);
+	  String country =prop.getProperty("CountryCode"+"_"+testId);
+	  System.out.println("Test Class Name "+result.getTestName()+"...."+result.getTestClass().getName());  
+		if(result.isSuccess()){
+			System.out.println("***** Success *****");
+			//System.out.println(result.getAttributeNames());
+			//String repoutPath = pro.getProperty("ResutlFilePath_001")+pro.getProperty("TestScenarioID_001")+".html";
+			HtmlReport gen = new HtmlReport(scenarioId, expected, actual,"PASS" , resultPath,country,"Desc" );
+			gen.reportCreation();
+		}
+		else{
+			//HtmlReport hr = new HtmlReport(scenarioId, "expectedResult", "actualResult", "result", "resultPath", "country", "Desc");
+			System.out.println("***** Failure *****");
+			
+			HtmlReport gen = new HtmlReport(scenarioId, expected, actual,"FAIL", resultPath,country,"Desc" );
+			gen.reportCreation();
+		}
+  }
+
+  @BeforeClass
+  public void beforeClass() throws IOException {
+	  FileInputStream fs = new FileInputStream(propPath);
+	  prop.load(fs);
+	 response= request.postSoapRequest(prop, testId);
+}
+  
+
+}
