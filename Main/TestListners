@@ -1,0 +1,27 @@
+package com.scb.edmi.support;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.testng.ISuite;
+import org.testng.ISuiteListener;
+
+import com.scb.edmi.support.ExcelTestData;
+
+
+
+
+public class TestListenr implements ISuiteListener {
+	
+	public void onStart(ISuite suite){
+		System.out.println("Before Suite"+suite.getName());
+		ExcelTestData createData = new ExcelTestData();
+		 Path eclpath = Paths.get("C:/EDMI/Payment Registration/PaymentRegistration.xlsx");
+		 System.out.println(eclpath.toString());
+		  createData.readExcelSheet(eclpath.toString());
+	}
+	public void onFinish(ISuite suit){
+		System.out.println("Before Suite"+suit.getName());
+	}
+
+}
